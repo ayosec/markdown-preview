@@ -6,6 +6,13 @@ use tiny_http::{Request, Response, Header};
 const HEADER: &str = "<DOCTYPE html>\n<meta charset=\"utf-8\">\n";
 
 pub fn handle_request(request: Request, source: &str, stylesheet: Option<&str>) {
+
+    if request.url() != "/" {
+        println!("[{}] rejected", request.url());
+        let _ = request.respond(Response::from_string("Not found\n").with_status_code(404));
+        return;
+    }
+
     let mut html = match read_source(source) {
         Ok(c) => markdown_to_html(&c, &ComrakOptions::default()),
         Err(e) => format!("Can't read '{}': {:?}\n", source, e),
@@ -23,7 +30,7 @@ pub fn handle_request(request: Request, source: &str, stylesheet: Option<&str>) 
         }
     }
 
-    println!("Sent {} bytes to {}", html.len(), request.remote_addr());
+    println!("[{}] sent {} bytes to {}", request.url(), html.len(), request.remote_addr());
 
     let response = Response::from_data(html)
                             .with_header(Header::from_bytes("Content-Type", "text/html").unwrap());
