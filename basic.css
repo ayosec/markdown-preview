@@ -1,0 +1,26 @@
+html {
+  margin: 0 auto;
+  max-width: 900px;
+}
+
+h1, h2, h3, h4, h5 {
+  border-bottom: 1px solid #ccc;
+}
+
+p, li {
+  line-height: 140%;
+}
+
+pre, code {
+  padding: 2px 4px;
+  background: #f4f4f4;
+  color: black;
+}
+
+pre {
+  border: 1px solid #ccc;
+}
+
+code {
+  display: inline-block;
+}

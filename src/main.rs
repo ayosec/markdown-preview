@@ -19,7 +19,7 @@ fn main() {
 
     loop {
         match server.recv() {
-            Ok(req) => http::handle_request(req, &opts.source),
+            Ok(req) => http::handle_request(req, &opts.source, opts.stylesheet.as_ref().map(|s| s.as_ref())),
             Err(e) => { println!("error: {}", e); break }
         };
     }
