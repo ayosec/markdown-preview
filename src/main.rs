@@ -15,6 +15,8 @@ fn main() {
 
     let server = tiny_http::Server::http((opts.address.as_str(), opts.port)).unwrap();
 
+    println!("Server ready in {}:{}", opts.address, opts.port);
+
     loop {
         match server.recv() {
             Ok(req) => http::handle_request(req, &opts.source),

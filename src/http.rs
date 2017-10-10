@@ -10,6 +10,8 @@ pub fn handle_request(request: Request, source: &str) {
         Err(e) => format!("Can't read '{}': {:?}\n", source, e),
     };
 
+    println!("Sent {} bytes to {}", html.len(), request.remote_addr());
+
     let result = request.respond(Response::from_data(html));
 
     if let Err(err) = result {
