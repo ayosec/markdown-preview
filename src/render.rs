@@ -4,7 +4,8 @@ use kuchiki::traits::*;
 use kuchiki;
 use mime_guess::guess_mime_type;
 use std::fs::File;
-use std::io::{self, Read};
+use std::io::Read;
+use std::error::Error;
 
 const HEADER: &str = "<DOCTYPE html>\n<meta charset=\"utf-8\">\n";
 
@@ -59,17 +60,14 @@ pub fn render_html(source: &str, stylesheet: Option<&str>) -> String {
     }
 }
 
-fn read_source(source: &str) -> io::Result<String> {
-    let mut file = File::open(source)?;
-    let mut content = String::new();
-    file.read_to_string(&mut content)?;
-    Ok(content)
+fn read_source(source: &str) -> Result<String, Box<Error>> {
+    Ok(String::from_utf8(read_bytes(source)?)?)
 }
 
-fn read_bytes(source: &str) -> io::Result<Vec<u8>> {
+fn read_bytes(source: &str) -> Result<Vec<u8>, Box<Error>> {
     let mut file = File::open(source)?;
     let mut content = match file.metadata() {
-        Ok(md) => { println!("File {} bytes", md.len()); Vec::with_capacity(md.len() as usize) },
+        Ok(md) => Vec::with_capacity(md.len() as usize),
         Err(_) => Vec::new(),
     };
     file.read_to_end(&mut content)?;
