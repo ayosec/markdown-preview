@@ -29,18 +29,16 @@ code {
  * Use CSS to generate section numbers in the headers
  */
 
-h1 {
-  counter-reset: section1 0 section2 0 section3 0;
-}
+h1 { counter-reset: section1 0 section2 0 section3 0; }
+h2 { counter-reset:            section2 0 section3 0; }
+h3 { counter-reset:                       section3 0; }
 
 h2::before {
-  counter-reset: section2 1 section3 1 section4 1;
   counter-increment: section1;
   content: counters(section1, ".") " ";
 }
 
 h3::before {
-  counter-reset: section3 1 section4 1;
   counter-increment: section2;
   content: counter(section1) "." counter(section2) " ";
 }
