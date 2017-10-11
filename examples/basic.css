@@ -49,3 +49,7 @@ h4::before {
   counter-increment: section3;
   content: counter(section1) "." counter(section2) "." counter(section3) " ";
 }
+
+img {
+  max-width: 100%;
+}
