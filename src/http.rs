@@ -1,7 +1,8 @@
+use options::Options;
 use render::render_html;
 use tiny_http::{Request, Response, Header};
 
-pub fn handle_request(request: Request, source: &str, stylesheet: Option<&str>) {
+pub fn handle_request(request: Request, opts: &Options) {
 
     if request.url() != "/" {
         println!("[{}] rejected", request.url());
@@ -9,7 +10,7 @@ pub fn handle_request(request: Request, source: &str, stylesheet: Option<&str>) 
         return;
     }
 
-    let html = render_html(source, stylesheet);
+    let html = render_html(opts);
 
     println!("[{}] sent {} bytes to {}", request.url(), html.len(), request.remote_addr());
 

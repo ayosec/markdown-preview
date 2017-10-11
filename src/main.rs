@@ -18,7 +18,7 @@ fn main() {
     let opts = options::Options::from_args();
 
     if opts.render {
-        let output = render::render_html(&opts.source, opts.stylesheet.as_ref().map(|s| s.as_ref()));
+        let output = render::render_html(&opts);
         print!("{}", output);
         return;
     }
@@ -29,7 +29,7 @@ fn main() {
 
     loop {
         match server.recv() {
-            Ok(req) => http::handle_request(req, &opts.source, opts.stylesheet.as_ref().map(|s| s.as_ref())),
+            Ok(req) => http::handle_request(req, &opts),
             Err(e) => { println!("error: {}", e); break }
         };
     }

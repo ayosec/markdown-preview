@@ -3,13 +3,15 @@ use comrak::{markdown_to_html, ComrakOptions};
 use kuchiki::traits::*;
 use kuchiki;
 use mime_guess::guess_mime_type;
+use options::Options;
+use std::error::Error;
 use std::fs::File;
 use std::io::Read;
-use std::error::Error;
 
 const HEADER: &str = "<DOCTYPE html>\n<meta charset=\"utf-8\">\n";
 
-pub fn render_html(source: &str, stylesheet: Option<&str>) -> String {
+pub fn render_html(opts: &Options) -> String {
+    let source: &str = &opts.source;
     let mut html = match read_source(source) {
         Ok(c) => markdown_to_html(&c, &ComrakOptions::default()),
         Err(e) => format!("Can't read '{}': {:?}\n", source, e),
@@ -19,7 +21,7 @@ pub fn render_html(source: &str, stylesheet: Option<&str>) -> String {
 
     // Inject custom stylesheet, if present.
 
-    if let Some(path) = stylesheet {
+    if let Some(path) = opts.stylesheet.as_ref().map(|s| s.as_ref()) {
         match read_source(path) {
             Ok(css) => {
                 let css = format!("<style>{}</style>", css);
