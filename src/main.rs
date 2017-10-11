@@ -1,11 +1,15 @@
+extern crate base64;
 extern crate comrak;
-extern crate tiny_http;
+extern crate kuchiki;
+extern crate mime_guess;
 extern crate structopt;
+extern crate tiny_http;
 #[macro_use]
 extern crate structopt_derive;
 
 mod http;
 mod options;
+mod render;
 
 use structopt::StructOpt;
 
