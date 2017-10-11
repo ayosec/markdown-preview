@@ -17,6 +17,8 @@ pub fn render_html(source: &str, stylesheet: Option<&str>) -> String {
 
     html.insert_str(0, HEADER);
 
+    // Inject custom stylesheet, if present.
+
     if let Some(path) = stylesheet {
         match read_source(path) {
             Ok(css) => {
@@ -27,22 +29,21 @@ pub fn render_html(source: &str, stylesheet: Option<&str>) -> String {
         }
     }
 
-    // Detect images used in the document. If any, replace them with data: URISs
+    // Detect images used in the document. If any, replace them with 'data:' URIs
 
     let document = kuchiki::parse_html().one(html.as_str());
 
-    let mut imgs_found = 0;
+    let mut imgs_found = false;
 
     for css_match in document.select("img").unwrap() {
         let mut attrs = css_match.attributes.borrow_mut();
         let mut new_src = None;
 
         if let Some(src) = attrs.get("src") {
-            imgs_found += 1;
-
             if let Ok(bytes) = read_bytes(src) {
                 let mime = guess_mime_type(src);
-                new_src = Some(format!("data:{}/;base64,{}", mime, base64::encode(&bytes)));
+                new_src = Some(format!("data:{};base64,{}", mime, base64::encode(&bytes)));
+                imgs_found = true;
             }
         }
 
@@ -51,12 +52,12 @@ pub fn render_html(source: &str, stylesheet: Option<&str>) -> String {
         }
     }
 
-    if imgs_found == 0 {
-        html
-    } else {
+    if imgs_found {
         let mut html = Vec::new();
         document.serialize(&mut html).unwrap();
         String::from_utf8(html).unwrap()
+    } else {
+        html
     }
 }
 
