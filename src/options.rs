@@ -8,6 +8,9 @@ pub struct Options {
     #[structopt(short = "a", long = "address", help = "Bind address", default_value = "127.0.0.1")]
     pub address: String,
 
+    #[structopt(short = "r", long = "render", help = "Render HTML and exist")]
+    pub render: bool,
+
     #[structopt(short = "s", long = "stylesheet", help = "Stylesheet to include in the HTML")]
     pub stylesheet: Option<String>,
 

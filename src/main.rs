@@ -17,6 +17,12 @@ fn main() {
 
     let opts = options::Options::from_args();
 
+    if opts.render {
+        let output = render::render_html(&opts.source, opts.stylesheet.as_ref().map(|s| s.as_ref()));
+        print!("{}", output);
+        return;
+    }
+
     let server = tiny_http::Server::http((opts.address.as_str(), opts.port)).unwrap();
 
     println!("Server ready in {}", server.server_addr());
