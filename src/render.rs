@@ -146,7 +146,7 @@ fn process_toc(document: &NodeRef) {
 
 fn make_toc_lists<'a, I>(toc_links: &mut Peekable<I>) -> NodeRef
 where
-    I: Iterator<Item=&'a TocItem>
+    I: Iterator<Item = &'a TocItem>,
 {
     let current_list = element!("ol");
 
@@ -202,15 +202,17 @@ fn toc_location(document: &NodeRef) -> NodeRef {
     document.clone()
 }
 
-fn clone_tree<I>(nodes: I) -> Vec<NodeRef> 
+fn clone_tree<I>(nodes: I) -> Vec<NodeRef>
 where
-    I: Iterator<Item=NodeRef>
+    I: Iterator<Item = NodeRef>,
 {
-    nodes.map(|node| {
-        let n = NodeRef::new(node.data().clone());
-        for child in clone_tree(node.children()) {
-            n.append(child);
-        }
-        n
-    }).collect()
+    nodes
+        .map(|node| {
+            let n = NodeRef::new(node.data().clone());
+            for child in clone_tree(node.children()) {
+                n.append(child);
+            }
+            n
+        })
+        .collect()
 }

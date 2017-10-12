@@ -20,10 +20,20 @@ pub fn handle_request(request: Request, opts: &Options) {
         (elapsed.as_secs() * 1000) as f64 + elapsed.subsec_nanos() as f64 * 1e-6
     };
 
-    println!("[{}] sent {} bytes to {} [{:.4}ms]", request.url(), html.len(), request.remote_addr(), duration);
+    println!(
+        "[{}] sent {} bytes to {} [{:.4}ms]",
+        request.url(),
+        html.len(),
+        request.remote_addr(),
+        duration
+    );
 
-    let response = Response::from_data(html)
-                            .with_header(Header::from_bytes("Content-Type", "text/html").unwrap());
+    let response = Response::from_data(html).with_header(
+        Header::from_bytes(
+            "Content-Type",
+            "text/html",
+        ).unwrap(),
+    );
 
     let result = request.respond(response);
 

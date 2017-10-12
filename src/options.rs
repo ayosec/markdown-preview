@@ -1,7 +1,6 @@
 #[derive(StructOpt, Debug)]
 #[structopt(name = "markdown-preview", about = "Preview for markdown files")]
 pub struct Options {
-
     #[structopt(short = "p", long = "port", help = "Bind port", default_value = "8081")]
     pub port: u16,
 
@@ -19,5 +18,4 @@ pub struct Options {
 
     #[structopt(help = "Source file")]
     pub source: String,
-
 }

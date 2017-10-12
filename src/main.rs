@@ -32,7 +32,10 @@ fn main() {
     loop {
         match server.recv() {
             Ok(req) => http::handle_request(req, &opts),
-            Err(e) => { println!("error: {}", e); break }
+            Err(e) => {
+                println!("error: {}", e);
+                break;
+            }
         };
     }
 
