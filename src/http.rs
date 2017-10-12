@@ -1,5 +1,6 @@
 use options::Options;
 use render::render_html;
+use std::time::Instant;
 use tiny_http::{Request, Response, Header};
 
 pub fn handle_request(request: Request, opts: &Options) {
@@ -10,9 +11,16 @@ pub fn handle_request(request: Request, opts: &Options) {
         return;
     }
 
+    let render_start = Instant::now();
+
     let html = render_html(opts);
 
-    println!("[{}] sent {} bytes to {}", request.url(), html.len(), request.remote_addr());
+    let duration = {
+        let elapsed = render_start.elapsed();
+        (elapsed.as_secs() * 1000) as f64 + elapsed.subsec_nanos() as f64 * 1e-6
+    };
+
+    println!("[{}] sent {} bytes to {} [{:.4}ms]", request.url(), html.len(), request.remote_addr(), duration);
 
     let response = Response::from_data(html)
                             .with_header(Header::from_bytes("Content-Type", "text/html").unwrap());
