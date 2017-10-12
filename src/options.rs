@@ -8,6 +8,9 @@ pub struct Options {
     #[structopt(short = "a", long = "address", help = "Bind address", default_value = "127.0.0.1")]
     pub address: String,
 
+    #[structopt(short = "t", long = "toc", help = "Generate a Table of Contents")]
+    pub toc: bool,
+
     #[structopt(short = "r", long = "render", help = "Render HTML and exist")]
     pub render: bool,
 

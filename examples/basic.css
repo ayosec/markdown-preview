@@ -25,6 +25,10 @@ code {
   display: inline-block;
 }
 
+img {
+  max-width: 100%;
+}
+
 /*
  * Use CSS to generate section numbers in the headers
  */
@@ -35,19 +39,58 @@ h3 { counter-reset:                       section3 0; }
 
 h2::before {
   counter-increment: section1;
-  content: counters(section1, ".") " ";
+  content: counters(section1, ".") ". ";
 }
 
 h3::before {
   counter-increment: section2;
-  content: counter(section1) "." counter(section2) " ";
+  content: counter(section1) "." counter(section2) ". ";
 }
 
 h4::before {
   counter-increment: section3;
-  content: counter(section1) "." counter(section2) "." counter(section3) " ";
+  content: counter(section1) "." counter(section2) "." counter(section3) ". ";
 }
 
-img {
-  max-width: 100%;
+/*
+ * Table of Contents
+ */
+
+div.toc {
+  padding: 5px;
+  border: solid #ccc;
+  border-width: 1px 0;
+}
+
+div.toc ol {
+  list-style-type: none;
+  counter-reset: toc-section;
+}
+
+div.toc ol li::before {
+  counter-increment: toc-section;
+  content: counters(toc-section, ".") ". ";
+}
+
+div.toc ol li a {
+  text-decoration: none;
+  color: #44c;
+  background: white;
+  transition: background 400ms;
+}
+
+div.toc ol li a:hover {
+  color: black;
+  background: #ccf;
+  transition: background 300ms;
+}
+
+/*
+ * Highlight main sections
+ */
+
+h2 { color: #33c; }
+
+div.toc > ol > li > a {
+  font-weight: bold;
 }

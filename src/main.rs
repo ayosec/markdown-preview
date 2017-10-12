@@ -5,6 +5,8 @@ extern crate mime_guess;
 extern crate structopt;
 extern crate tiny_http;
 #[macro_use]
+extern crate html5ever;
+#[macro_use]
 extern crate structopt_derive;
 
 mod http;
