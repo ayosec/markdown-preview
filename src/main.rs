@@ -1,13 +1,13 @@
 extern crate base64;
 extern crate comrak;
+#[macro_use]
+extern crate html5ever;
 extern crate kuchiki;
 extern crate mime_guess;
 extern crate structopt;
-extern crate tiny_http;
-#[macro_use]
-extern crate html5ever;
 #[macro_use]
 extern crate structopt_derive;
+extern crate tiny_http;
 
 mod http;
 mod options;
@@ -16,7 +16,6 @@ mod render;
 use structopt::StructOpt;
 
 fn main() {
-
     let opts = options::Options::from_args();
 
     if opts.render {
@@ -38,5 +37,4 @@ fn main() {
             }
         };
     }
-
 }

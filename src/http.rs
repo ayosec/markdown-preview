@@ -1,10 +1,9 @@
 use options::Options;
 use render::render_html;
 use std::time::Instant;
-use tiny_http::{Request, Response, Header};
+use tiny_http::{Header, Request, Response};
 
 pub fn handle_request(request: Request, opts: &Options) {
-
     if request.url() != "/" {
         println!("[{}] rejected", request.url());
         let _ = request.respond(Response::from_string("Not found\n").with_status_code(404));
@@ -28,12 +27,8 @@ pub fn handle_request(request: Request, opts: &Options) {
         duration
     );
 
-    let response = Response::from_data(html).with_header(
-        Header::from_bytes(
-            "Content-Type",
-            "text/html",
-        ).unwrap(),
-    );
+    let response = Response::from_data(html)
+        .with_header(Header::from_bytes("Content-Type", "text/html").unwrap());
 
     let result = request.respond(response);
 

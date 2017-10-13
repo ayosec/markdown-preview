@@ -141,7 +141,6 @@ fn process_toc(document: &NodeRef) {
 
     let list = make_toc_lists(&mut toc_links.iter().peekable());
     toc_location(document).prepend(list);
-
 }
 
 fn make_toc_lists<'a, I>(toc_links: &mut Peekable<I>) -> NodeRef
@@ -151,7 +150,6 @@ where
     let current_list = element!("ol");
 
     'top: loop {
-
         let li = element!("li");
         let current_level;
 
@@ -188,7 +186,6 @@ where
                 break 'inner;
             }
         }
-
     }
 
     current_list
