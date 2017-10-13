@@ -150,7 +150,7 @@ where
 {
     let current_list = element!("ol");
 
-    loop {
+    'top: loop {
 
         let li = element!("li");
         let current_level;
@@ -172,17 +172,21 @@ where
             current_level = toc_link.level;
         }
 
-        // Check if the next item is at a different level
-        let next_level = match toc_links.peek() {
-            None => break,
-            Some(p) => p.level,
-        };
+        'inner: loop {
+            // Check if the next item is at a different level
+            let next_level = match toc_links.peek() {
+                None => break 'top,
+                Some(p) => p.level,
+            };
 
-        if current_level < next_level {
-            let sublist = make_toc_lists(toc_links);
-            li.append(sublist);
-        } else if current_level > next_level {
-            break;
+            if current_level < next_level {
+                let sublist = make_toc_lists(toc_links);
+                li.append(sublist);
+            } else if current_level > next_level {
+                break 'top;
+            } else {
+                break 'inner;
+            }
         }
 
     }
