@@ -115,7 +115,7 @@ fn process_toc(document: &NodeRef) {
         if let kuchiki::iter::NodeEdge::Start(ref start) = node {
             if let Some(data) = start.as_element() {
                 let tag_name = data.name.local.to_lowercase();
-                if tag_name.starts_with("h") {
+                if tag_name.starts_with('h') {
                     if let Ok(header_level) = u8::from_str(&tag_name[1..]) {
                         // Skip top level, used for titles
                         if header_level > 1 {
