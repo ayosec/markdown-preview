@@ -16,7 +16,7 @@ const HEADER: &str = "<!DOCTYPE html>\n<meta charset=\"utf-8\">\n";
 pub fn render_html(opts: &Options) -> String {
     let source: &str = &opts.source;
     let mut html = match read_source(source) {
-        Ok(c) => markdown_to_html(&c, &ComrakOptions::default()),
+        Ok(c) => markdown_to_html(&c, &comrak_options()),
         Err(e) => format!("Can't read '{}': {:?}\n", source, e),
     };
 
@@ -47,6 +47,16 @@ pub fn render_html(opts: &Options) -> String {
     let mut html = Vec::new();
     document.serialize(&mut html).unwrap();
     String::from_utf8(html).unwrap()
+}
+
+fn comrak_options() -> ComrakOptions {
+    let mut cm_opts = ComrakOptions::default();
+    cm_opts.ext_strikethrough = true;
+    cm_opts.ext_table = true;
+    cm_opts.ext_autolink = true;
+    cm_opts.ext_tasklist = true;
+    cm_opts.ext_superscript = true;
+    cm_opts
 }
 
 fn read_source(source: &str) -> Result<String, Box<Error>> {
