@@ -94,3 +94,28 @@ h2 { color: #33c; }
 div.toc > ol > li > a {
   font-weight: bold;
 }
+
+/*
+ * Tables
+ */
+
+table {
+  background: #999;
+  color: white;
+  border-spacing: 1px;
+}
+
+thead tr {
+  background: #eee;
+  color: black;
+}
+
+tbody tr {
+  background: white;
+  color: black;
+}
+
+td, th {
+  text-align: left;
+  padding: 4px 8px;
+}
