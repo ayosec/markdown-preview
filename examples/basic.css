@@ -119,3 +119,19 @@ td, th {
   text-align: left;
   padding: 4px 8px;
 }
+
+/*
+ * Links
+ */
+
+a {
+  color: #44c;
+  background: white;
+}
+
+a code {
+  color: #44c;
+  background: #f4f4f4;
+  display: inline;
+  padding: 0;
+}
