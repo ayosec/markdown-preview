@@ -116,8 +116,11 @@ tbody tr {
 }
 
 td, th {
-  text-align: left;
   padding: 4px 8px;
+}
+
+th:not([align]) {
+  text-align: left;
 }
 
 /*
