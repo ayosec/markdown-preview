@@ -98,8 +98,10 @@ fn process_images(document: &NodeRef) {
 
 // Detect <pre><code> blocks, and parse them via Pygments
 fn process_code_snippets(document: &NodeRef) {
-    for css_match in document.select("code").unwrap() {
+    let mut to_detach = Vec::new();
+    for css_match in document.select("pre code").unwrap() {
         if let Some(code_class) = css_match.attributes.borrow().get("class") {
+            eprintln!("{:?}", code_class);
             let spawn = Command::new("pygmentize")
                 .args(&["-f", "html", "-O", "noclasses", "-l"])
                 .arg(code_class.replace("language-", ""))
@@ -111,7 +113,7 @@ fn process_code_snippets(document: &NodeRef) {
                 Ok(process) => process,
                 Err(e) => {
                     eprintln!("Can't launch pygmentize: {:?}", e);
-                    return;
+                    continue;
                 }
             };
 
@@ -121,20 +123,27 @@ fn process_code_snippets(document: &NodeRef) {
                     let output = process.wait_with_output().map(|o| o.stdout);
                     match output.as_ref().map(|o| str::from_utf8(o.as_ref())) {
                         Ok(Ok(o)) => kuchiki::parse_html().one(o),
-                        _ => return,
+                        e => {
+                            eprintln!("Can't read HTML from pygmentize: {:?}", e);
+                            continue
+                        }
                     }
                 }
                 e => {
                     eprintln!("Can't write to pygmentize: {:?}", e);
                     let _ = process.kill();
-                    return;
+                    continue;
                 }
             };
 
             let pre_elem = css_match.as_node().parent().unwrap();
             pre_elem.insert_after(html_code.select_first("div").unwrap().as_node().clone());
-            pre_elem.detach();
+            to_detach.push(pre_elem);
         }
+    }
+
+    for elem in to_detach {
+        elem.detach();
     }
 }
 
