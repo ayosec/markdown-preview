@@ -8,8 +8,10 @@ use options::Options;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
+use std::io::Write;
 use std::iter::Peekable;
-use std::str::FromStr;
+use std::process::{Command, Stdio};
+use std::str::{self,FromStr};
 
 const HEADER: &str = "<!DOCTYPE html>\n<meta charset=\"utf-8\">\n";
 
@@ -37,6 +39,7 @@ pub fn render_html(opts: &Options) -> String {
     let document = kuchiki::parse_html().one(html.as_str());
 
     process_images(&document);
+    process_code_snippets(&document);
 
     if opts.toc {
         process_toc(&document);
@@ -89,6 +92,48 @@ fn process_images(document: &NodeRef) {
 
         if let Some(src) = new_src {
             attrs.insert("src", src);
+        }
+    }
+}
+
+// Detect <pre><code> blocks, and parse them via Pygments
+fn process_code_snippets(document: &NodeRef) {
+    for css_match in document.select("code").unwrap() {
+        if let Some(code_class) = css_match.attributes.borrow().get("class") {
+            let spawn = Command::new("pygmentize")
+                .args(&["-f", "html", "-O", "noclasses", "-l"])
+                .arg(code_class.replace("language-", ""))
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn();
+
+            let mut process = match spawn {
+                Ok(process) => process,
+                Err(e) => {
+                    eprintln!("Can't launch pygmentize: {:?}", e);
+                    return;
+                }
+            };
+
+            let code_text = css_match.text_contents();
+            let html_code = match process.stdin.as_mut().map(|s| s.write_all(code_text.as_bytes())) {
+                Some(Ok(_)) => {
+                    let output = process.wait_with_output().map(|o| o.stdout);
+                    match output.as_ref().map(|o| str::from_utf8(o.as_ref())) {
+                        Ok(Ok(o)) => kuchiki::parse_html().one(o),
+                        _ => return,
+                    }
+                }
+                e => {
+                    eprintln!("Can't write to pygmentize: {:?}", e);
+                    let _ = process.kill();
+                    return;
+                }
+            };
+
+            let pre_elem = css_match.as_node().parent().unwrap();
+            pre_elem.insert_after(html_code.select_first("div").unwrap().as_node().clone());
+            pre_elem.detach();
         }
     }
 }
