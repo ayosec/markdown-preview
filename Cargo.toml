@@ -12,7 +12,9 @@ kuchiki = "0.8.0"
 mime_guess = "2.0.3"
 structopt = "0.3.11"
 structopt-derive = "0.4.4"
-tiny_http = "0.6.2"
+warp = "0.2.2"
+tokio = { version = "0.2.13", features = [ "rt-threaded", "sync", "macros" ] }
+anyhow = "1.0.26"
 
 [profile.release]
 lto = true

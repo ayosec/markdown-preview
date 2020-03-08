@@ -1,38 +1,29 @@
 use crate::options::Options;
 use crate::render::render_html;
-use std::time::Instant;
-use tiny_http::{Header, Request, Response};
+use std::net::ToSocketAddrs;
+use warp::Filter;
 
-pub fn handle_request(request: Request, opts: &Options) {
-    if request.url() != "/" {
-        println!("[{}] rejected", request.url());
-        let _ = request.respond(Response::from_string("Not found\n").with_status_code(404));
-        return;
-    }
+pub async fn start(opts: Options) -> Result<(), anyhow::Error> {
+    let address = format!("{}:{}", opts.address, opts.port)
+        .to_socket_addrs()?
+        .next()
+        .unwrap();
 
-    let render_start = Instant::now();
+    let log = warp::log::custom(|info| {
+        eprintln!(
+            "{} {} {} [{:?}ms]",
+            info.method(),
+            info.path(),
+            info.status(),
+            info.elapsed().as_millis()
+            );
+    });
+    let opts = warp::any().map(move || opts.clone());
 
-    let html = render_html(opts);
+    let routes = warp::path::end().and(opts).map(|opts| render_html(&opts));
 
-    let duration = {
-        let elapsed = render_start.elapsed();
-        (elapsed.as_secs() * 1000) as f64 + elapsed.subsec_nanos() as f64 * 1e-6
-    };
+    let (addr, fut) = warp::serve(routes.with(log)).try_bind_ephemeral(address)?;
+    println!("HTTP server ready at {}", addr);
 
-    println!(
-        "[{}] sent {} bytes to {} [{:.4}ms]",
-        request.url(),
-        html.len(),
-        request.remote_addr(),
-        duration
-    );
-
-    let response = Response::from_data(html)
-        .with_header(Header::from_bytes("Content-Type", "text/html").unwrap());
-
-    let result = request.respond(response);
-
-    if let Err(err) = result {
-        eprintln!("respond failed: {:?}", err);
-    }
+    Ok(fut.await)
 }

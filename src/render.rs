@@ -1,16 +1,16 @@
+use crate::options::Options;
 use base64;
 use comrak::{markdown_to_html, ComrakOptions};
-use html5ever::{QualName, ns};
+use html5ever::{ns, QualName};
 use kuchiki::traits::*;
 use kuchiki::{self, ExpandedName, NodeRef};
-use crate::options::Options;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::io::Write;
 use std::iter::Peekable;
 use std::process::{Command, Stdio};
-use std::str::{self,FromStr};
+use std::str::{self, FromStr};
 
 const HEADER: &str = "<!DOCTYPE html>\n<meta charset=\"utf-8\">\n";
 
@@ -117,14 +117,18 @@ fn process_code_snippets(document: &NodeRef) {
             };
 
             let code_text = css_match.text_contents();
-            let html_code = match process.stdin.as_mut().map(|s| s.write_all(code_text.as_bytes())) {
+            let html_code = match process
+                .stdin
+                .as_mut()
+                .map(|s| s.write_all(code_text.as_bytes()))
+            {
                 Some(Ok(_)) => {
                     let output = process.wait_with_output().map(|o| o.stdout);
                     match output.as_ref().map(|o| str::from_utf8(o.as_ref())) {
                         Ok(Ok(o)) => kuchiki::parse_html().one(o),
                         e => {
                             eprintln!("Can't read HTML from pygmentize: {:?}", e);
-                            continue
+                            continue;
                         }
                     }
                 }
@@ -156,9 +160,9 @@ macro_rules! attribute {
     ($value:expr) => {
         kuchiki::Attribute {
             prefix: None,
-            value: $value.into()
+            value: $value.into(),
         }
-    }
+    };
 }
 
 macro_rules! element {
