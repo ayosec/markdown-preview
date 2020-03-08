@@ -20,7 +20,11 @@ async fn watch_loop(path: PathBuf, tx: watch::Sender<()>) -> anyhow::Result<()> 
     let mut inotify = Inotify::init()?;
     let file_name = path.file_name().map(|f| f.to_owned());
 
-    if let Some(parent) = path.parent() {
+    if let Some(parent) = path
+        .canonicalize()
+        .ok()
+        .and_then(|c| c.parent().map(|p| p.to_path_buf()))
+    {
         inotify.add_watch(parent, WatchMask::CREATE)?;
     }
 
