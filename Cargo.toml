@@ -2,10 +2,11 @@
 name = "markdown-preview"
 version = "0.1.0"
 authors = ["app"]
+edition = "2018"
 
 [dependencies]
 base64 = "0.7"
-comrak = "0.2"
+comrak = "0.7"
 html5ever = "0.20.0"
 kuchiki = "0.6"
 mime_guess = "1.8.2"

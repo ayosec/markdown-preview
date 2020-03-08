@@ -1,5 +1,5 @@
-use options::Options;
-use render::render_html;
+use crate::options::Options;
+use crate::render::render_html;
 use std::time::Instant;
 use tiny_http::{Header, Request, Response};
 

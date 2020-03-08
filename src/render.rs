@@ -4,7 +4,7 @@ use html5ever::QualName;
 use kuchiki::traits::*;
 use kuchiki::{self, NodeRef};
 use mime_guess::guess_mime_type;
-use options::Options;
+use crate::options::Options;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
@@ -62,11 +62,11 @@ fn comrak_options() -> ComrakOptions {
     cm_opts
 }
 
-fn read_source(source: &str) -> Result<String, Box<Error>> {
+fn read_source(source: &str) -> Result<String, Box<dyn Error>> {
     Ok(String::from_utf8(read_bytes(source)?)?)
 }
 
-fn read_bytes(source: &str) -> Result<Vec<u8>, Box<Error>> {
+fn read_bytes(source: &str) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut file = File::open(source)?;
     let mut content = match file.metadata() {
         Ok(md) => Vec::with_capacity(md.len() as usize),
