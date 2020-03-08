@@ -1,9 +1,8 @@
 use base64;
 use comrak::{markdown_to_html, ComrakOptions};
-use html5ever::QualName;
+use html5ever::{QualName, ns};
 use kuchiki::traits::*;
-use kuchiki::{self, NodeRef};
-use mime_guess::guess_mime_type;
+use kuchiki::{self, ExpandedName, NodeRef};
 use crate::options::Options;
 use std::error::Error;
 use std::fs::File;
@@ -85,7 +84,7 @@ fn process_images(document: &NodeRef) {
 
         if let Some(src) = attrs.get("src") {
             if let Ok(bytes) = read_bytes(src) {
-                let mime = guess_mime_type(src);
+                let mime = mime_guess::from_path(src).first_or_octet_stream();
                 new_src = Some(format!("data:{};base64,{}", mime, base64::encode(&bytes)));
             }
         }
@@ -153,13 +152,22 @@ macro_rules! qname {
     };
 }
 
+macro_rules! attribute {
+    ($value:expr) => {
+        kuchiki::Attribute {
+            prefix: None,
+            value: $value.into()
+        }
+    }
+}
+
 macro_rules! element {
     ($tag:expr) => {
         NodeRef::new_element(qname!($tag), vec![])
     };
 
     ($tag:expr, $($key:expr => $value:expr),*) => {
-        NodeRef::new_element(qname!($tag), vec![$((qname!($key), $value)),*])
+        NodeRef::new_element(qname!($tag), vec![$((ExpandedName::new(ns!(), $key), attribute!($value))),*])
     };
 }
 
