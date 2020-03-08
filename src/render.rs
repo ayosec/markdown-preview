@@ -14,14 +14,29 @@ use std::str::{self, FromStr};
 
 const HEADER: &str = "<!DOCTYPE html>\n<meta charset=\"utf-8\">\n";
 
-pub fn render_html(opts: &Options) -> String {
+const SSE_SOURCE: &str = r#"
+  <script>
+    var es = new EventSource("/listen");
+    es.onmessage = function(e) {
+        document.body.innerHTML = e.data;
+    }
+  </script>
+"#;
+
+pub fn render_html(opts: &Options, header: bool, sse: bool) -> String {
     let source: &str = &opts.source;
     let mut html = match read_source(source) {
         Ok(c) => markdown_to_html(&c, &comrak_options()),
         Err(e) => format!("Can't read '{}': {:?}\n", source, e),
     };
 
-    html.insert_str(0, HEADER);
+    if sse {
+        html.insert_str(0, SSE_SOURCE);
+    }
+
+    if header {
+        html.insert_str(0, HEADER);
+    }
 
     // Inject custom stylesheet, if present.
 
@@ -117,11 +132,7 @@ fn process_code_snippets(document: &NodeRef) {
             };
 
             let code_text = css_match.text_contents();
-            let html_code = match process
-                .stdin
-                .as_mut()
-                .map(|s| s.write_all(code_text.as_bytes()))
-            {
+            let html_code = match process.stdin.as_mut().map(|s| s.write_all(code_text.as_bytes())) {
                 Some(Ok(_)) => {
                     let output = process.wait_with_output().map(|o| o.stdout);
                     match output.as_ref().map(|o| str::from_utf8(o.as_ref())) {
