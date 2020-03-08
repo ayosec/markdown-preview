@@ -8,7 +8,7 @@ h1, h2, h3, h4, h5 {
 }
 
 p, li {
-  line-height: 140%;
+  line-height: 160%;
 }
 
 pre, code {
@@ -137,4 +137,9 @@ a code {
   background: #f4f4f4;
   display: inline;
   padding: 0;
+}
+
+blockquote {
+  border-left: 3px solid #999;
+  padding-left: 1em;
 }

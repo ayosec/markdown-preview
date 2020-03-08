@@ -1,28 +1,42 @@
+use crate::options::Options;
 use base64;
 use comrak::{markdown_to_html, ComrakOptions};
-use html5ever::QualName;
+use html5ever::{ns, QualName};
 use kuchiki::traits::*;
-use kuchiki::{self, NodeRef};
-use mime_guess::guess_mime_type;
-use options::Options;
+use kuchiki::{self, ExpandedName, NodeRef};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::io::Write;
 use std::iter::Peekable;
 use std::process::{Command, Stdio};
-use std::str::{self,FromStr};
+use std::str::{self, FromStr};
 
 const HEADER: &str = "<!DOCTYPE html>\n<meta charset=\"utf-8\">\n";
 
-pub fn render_html(opts: &Options) -> String {
+const SSE_SOURCE: &str = r#"
+  <script>
+    var es = new EventSource("/listen");
+    es.onmessage = function(e) {
+        document.body.innerHTML = e.data;
+    }
+  </script>
+"#;
+
+pub fn render_html(opts: &Options, header: bool, sse: bool) -> String {
     let source: &str = &opts.source;
     let mut html = match read_source(source) {
         Ok(c) => markdown_to_html(&c, &comrak_options()),
         Err(e) => format!("Can't read '{}': {:?}\n", source, e),
     };
 
-    html.insert_str(0, HEADER);
+    if sse {
+        html.insert_str(0, SSE_SOURCE);
+    }
+
+    if header {
+        html.insert_str(0, HEADER);
+    }
 
     // Inject custom stylesheet, if present.
 
@@ -62,11 +76,11 @@ fn comrak_options() -> ComrakOptions {
     cm_opts
 }
 
-fn read_source(source: &str) -> Result<String, Box<Error>> {
+fn read_source(source: &str) -> Result<String, Box<dyn Error>> {
     Ok(String::from_utf8(read_bytes(source)?)?)
 }
 
-fn read_bytes(source: &str) -> Result<Vec<u8>, Box<Error>> {
+fn read_bytes(source: &str) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut file = File::open(source)?;
     let mut content = match file.metadata() {
         Ok(md) => Vec::with_capacity(md.len() as usize),
@@ -85,7 +99,7 @@ fn process_images(document: &NodeRef) {
 
         if let Some(src) = attrs.get("src") {
             if let Ok(bytes) = read_bytes(src) {
-                let mime = guess_mime_type(src);
+                let mime = mime_guess::from_path(src).first_or_octet_stream();
                 new_src = Some(format!("data:{};base64,{}", mime, base64::encode(&bytes)));
             }
         }
@@ -125,7 +139,7 @@ fn process_code_snippets(document: &NodeRef) {
                         Ok(Ok(o)) => kuchiki::parse_html().one(o),
                         e => {
                             eprintln!("Can't read HTML from pygmentize: {:?}", e);
-                            continue
+                            continue;
                         }
                     }
                 }
@@ -153,13 +167,22 @@ macro_rules! qname {
     };
 }
 
+macro_rules! attribute {
+    ($value:expr) => {
+        kuchiki::Attribute {
+            prefix: None,
+            value: $value.into(),
+        }
+    };
+}
+
 macro_rules! element {
     ($tag:expr) => {
         NodeRef::new_element(qname!($tag), vec![])
     };
 
     ($tag:expr, $($key:expr => $value:expr),*) => {
-        NodeRef::new_element(qname!($tag), vec![$((qname!($key), $value)),*])
+        NodeRef::new_element(qname!($tag), vec![$((ExpandedName::new(ns!(), $key), attribute!($value))),*])
     };
 }
 
