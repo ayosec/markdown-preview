@@ -2,6 +2,7 @@ use inotify::{EventMask, Inotify, WatchMask};
 use std::path::PathBuf;
 use tokio::stream::StreamExt;
 use tokio::sync::watch;
+use tokio::time::Duration;
 
 pub fn start(opts: &crate::options::Options) -> anyhow::Result<watch::Receiver<()>> {
     let (tx, rx) = watch::channel(());
@@ -34,12 +35,19 @@ async fn watch_loop(path: PathBuf, tx: watch::Sender<()>) -> anyhow::Result<()> 
     let mut stream = inotify.event_stream(&mut buffer)?;
 
     while let Some(Ok(event)) = stream.next().await {
+        let mut notify = false;
+
         if event.mask.contains(EventMask::MODIFY) {
-            tx.broadcast(())?;
+            notify = true;
         }
 
         if event.mask.contains(EventMask::CREATE) && event.name == file_name {
             inotify.add_watch(&path, WatchMask::MODIFY)?;
+            notify = true;
+        }
+
+        if notify {
+            tokio::time::delay_for(Duration::from_millis(50)).await;
             tx.broadcast(())?;
         }
     }
