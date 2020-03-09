@@ -40,13 +40,15 @@ pub fn render_html(opts: &Options, header: bool, sse: bool) -> String {
 
     // Inject custom stylesheet, if present.
 
-    if let Some(path) = opts.stylesheet.as_ref().map(|s| s.as_ref()) {
-        match read_source(path) {
-            Ok(css) => {
-                let css = format!("<style>{}</style>", css);
-                html.insert_str(HEADER.len(), &css);
+    if header {
+        if let Some(path) = opts.stylesheet.as_ref().map(|s| s.as_ref()) {
+            match read_source(path) {
+                Ok(css) => {
+                    let css = format!("<style>{}</style>", css);
+                    html.insert_str(HEADER.len(), &css);
+                }
+                Err(e) => eprintln!("Can't open {}: {}", path, e),
             }
-            Err(e) => eprintln!("Can't open {}: {}", path, e),
         }
     }
 
