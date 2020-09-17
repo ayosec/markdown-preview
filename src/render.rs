@@ -12,7 +12,11 @@ use std::iter::Peekable;
 use std::process::{Command, Stdio};
 use std::str::{self, FromStr};
 
-const HEADER: &str = "<!DOCTYPE html>\n<meta charset=\"utf-8\">\n";
+const HEADER: &str = r#"
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+"#;
 
 const SSE_SOURCE: &str = r#"
   <script>
