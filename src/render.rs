@@ -74,6 +74,7 @@ pub fn render_html(opts: &Options, header: bool, sse: bool) -> String {
 
 fn comrak_options() -> ComrakOptions {
     let mut cm_opts = ComrakOptions::default();
+    cm_opts.unsafe_ = true;
     cm_opts.ext_strikethrough = true;
     cm_opts.ext_table = true;
     cm_opts.ext_autolink = true;
