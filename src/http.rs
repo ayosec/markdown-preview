@@ -24,7 +24,7 @@ pub async fn start(opts: Options, watcher: Option<watch::Receiver<()>>) -> Resul
         let opts = opts.clone();
 
         tokio::spawn(async move {
-            while let Some(_) = watcher.recv().await {
+            while watcher.recv().await.is_some() {
                 let html = render_html(&opts, false, false);
                 println!("HTML updated ({} bytes)", html.len());
                 connections.lock().unwrap().retain(|tx| {
@@ -40,7 +40,7 @@ pub async fn start(opts: Options, watcher: Option<watch::Receiver<()>>) -> Resul
 
     // GET /
     let root = warp::path::end().and(opts).map(move |opts| {
-        let html = render_html(&opts, true, enable_sse.clone());
+        let html = render_html(&opts, true, enable_sse);
         warp::http::Response::builder()
             .header("Content-Type", "text/html; charset=utf-8")
             .body(html)
@@ -58,7 +58,8 @@ pub async fn start(opts: Options, watcher: Option<watch::Receiver<()>>) -> Resul
     let (addr, fut) = warp::serve(routes).try_bind_ephemeral(address)?;
     println!("HTTP server ready at {}", addr);
 
-    Ok(fut.await)
+    fut.await;
+    Ok(())
 }
 
 fn print_request(info: warp::log::Info) {

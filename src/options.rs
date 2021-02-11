@@ -1,5 +1,5 @@
 #[derive(StructOpt, Debug, Clone)]
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[structopt(name = "markdown-preview", about = "Preview for markdown files")]
 pub struct Options {
     #[structopt(short = "p", long = "port", help = "Bind port", default_value = "8081")]

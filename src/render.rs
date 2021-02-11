@@ -1,15 +1,15 @@
 use crate::options::Options;
-use base64;
 use comrak::{markdown_to_html, ComrakOptions};
 use html5ever::{ns, QualName};
 use kuchiki::traits::*;
 use kuchiki::{self, ExpandedName, NodeRef};
+use std::cmp::Ordering;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::iter::Peekable;
 use std::str::{self, FromStr};
-use syntect::{html, parsing::SyntaxSet, highlighting::ThemeSet};
+use syntect::{highlighting::ThemeSet, html, parsing::SyntaxSet};
 
 const HEADER: &str = r#"
 <!DOCTYPE html>
@@ -118,7 +118,6 @@ fn process_images(document: &NodeRef) {
 
 // Detect <pre><code> blocks, and parse them via Pygments
 fn process_code_snippets(document: &NodeRef) {
-
     let syntax_set = SyntaxSet::load_defaults_newlines();
     let theme_set = ThemeSet::load_defaults();
 
@@ -184,8 +183,8 @@ fn process_toc(document: &NodeRef) {
         if let kuchiki::iter::NodeEdge::Start(ref start) = node {
             if let Some(data) = start.as_element() {
                 let tag_name = data.name.local.to_lowercase();
-                if tag_name.starts_with('h') {
-                    if let Ok(header_level) = u8::from_str(&tag_name[1..]) {
+                if let Some(tag_name) = tag_name.strip_prefix('h') {
+                    if let Ok(header_level) = u8::from_str(tag_name) {
                         // Skip top level, used for titles
                         if header_level > 1 {
                             refs_count += 1;
@@ -246,13 +245,15 @@ where
                 Some(p) => p.level,
             };
 
-            if current_level < next_level {
-                let sublist = make_toc_lists(toc_links);
-                li.append(sublist);
-            } else if current_level > next_level {
-                break 'top;
-            } else {
-                break 'inner;
+            match current_level.cmp(&next_level) {
+                Ordering::Less => {
+                    let sublist = make_toc_lists(toc_links);
+                    li.append(sublist);
+                }
+
+                Ordering::Greater => break 'top,
+
+                _ => break 'inner,
             }
         }
     }
