@@ -17,6 +17,9 @@ pub struct Options {
     #[structopt(short = "s", long = "stylesheet", help = "Stylesheet to include in the HTML")]
     pub stylesheet: Option<String>,
 
+    #[structopt(short = "T", long = "theme", help = "Built-in theme ('list' to show available themes)")]
+    pub theme: Option<String>,
+
     #[structopt(help = "Source file")]
     pub source: String,
 }

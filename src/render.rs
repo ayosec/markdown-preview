@@ -1,4 +1,6 @@
 use crate::options::Options;
+use crate::themes;
+
 use comrak::{markdown_to_html, ComrakOptions};
 use html5ever::{ns, QualName};
 use kuchiki::traits::*;
@@ -46,14 +48,27 @@ pub fn render_html(opts: &Options, header: bool, sse: bool) -> String {
     // Inject custom stylesheet, if present.
 
     if header {
-        if let Some(path) = opts.stylesheet.as_ref().map(|s| s.as_ref()) {
+        let mut added_css = String::new();
+
+        // User stylesheet
+        if let Some(path) = opts.stylesheet.as_deref() {
             match read_source(path) {
-                Ok(css) => {
-                    let css = format!("<style>{}</style>", css);
-                    html.insert_str(HEADER.len(), &css);
-                }
+                Ok(css) => added_css.push_str(&css),
                 Err(e) => eprintln!("Can't open {}: {}", path, e),
             }
+        }
+
+        // Built-in stylesheet
+        if let Some(theme) = opts.theme.as_deref() {
+            match themes::load(theme) {
+                Some(css) => added_css.push_str(&css),
+                None => eprintln!("Invalid theme {:?}", theme),
+            }
+        }
+
+        if !added_css.is_empty() {
+            let css = format!("<style>{}</style>", added_css);
+            html.insert_str(HEADER.len(), &css);
         }
     }
 

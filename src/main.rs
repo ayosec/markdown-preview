@@ -6,6 +6,7 @@ extern crate structopt_derive;
 mod http;
 mod options;
 mod render;
+mod themes;
 mod watcher;
 
 use structopt::StructOpt;
@@ -13,6 +14,13 @@ use structopt::StructOpt;
 #[tokio::main]
 async fn main() {
     let opts = options::Options::from_args();
+
+    if opts.theme.as_deref() == Some("list") {
+        for theme in themes::list() {
+            println!("{}", theme);
+        }
+        return;
+    }
 
     if opts.render {
         let output = render::render_html(&opts, true, false);
