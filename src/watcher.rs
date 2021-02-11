@@ -1,15 +1,17 @@
-use inotify::{EventMask, Inotify, WatchMask};
 use std::path::PathBuf;
-use tokio::stream::StreamExt;
+
+use inotify::{Inotify, WatchMask};
 use tokio::sync::watch;
-use tokio::time::Duration;
 
-pub fn start(opts: &crate::options::Options) -> anyhow::Result<watch::Receiver<()>> {
-    let (tx, rx) = watch::channel(());
+use crate::options::Options;
+use crate::render::render_html;
 
-    let path = PathBuf::from(opts.source.as_str());
-    tokio::spawn(async move {
-        if let Err(e) = watch_loop(path, tx).await {
+pub fn start(opts: &Options) -> anyhow::Result<watch::Receiver<String>> {
+    let (tx, rx) = watch::channel(String::new());
+    let opts = opts.clone();
+
+    tokio::task::spawn_blocking(move || {
+        if let Err(e) = watch_loop(opts, tx) {
             eprintln!("ERROR watch_loop: {:?}", e);
         }
     });
@@ -17,40 +19,29 @@ pub fn start(opts: &crate::options::Options) -> anyhow::Result<watch::Receiver<(
     Ok(rx)
 }
 
-async fn watch_loop(path: PathBuf, tx: watch::Sender<()>) -> anyhow::Result<()> {
+fn watch_loop(opts: Options, notify: watch::Sender<String>) -> anyhow::Result<()> {
+    let source = PathBuf::from(opts.source.as_str()).canonicalize()?;
+
     let mut inotify = Inotify::init()?;
-    let file_name = path.file_name().map(|f| f.to_owned());
 
-    if let Some(parent) = path
-        .canonicalize()
-        .ok()
-        .and_then(|c| c.parent().map(|p| p.to_path_buf()))
-    {
-        inotify.add_watch(parent, WatchMask::CREATE)?;
-    }
+    inotify.add_watch(source.parent().unwrap(), WatchMask::CREATE)?;
+    inotify.add_watch(&source, WatchMask::MODIFY | WatchMask::CREATE)?;
 
-    inotify.add_watch(&path, WatchMask::MODIFY)?;
+    loop {
+        let mut buffer = [0u8; 1024];
+        let events = inotify.read_events_blocking(&mut buffer)?;
 
-    let mut buffer = [0; 32];
-    let mut stream = inotify.event_stream(&mut buffer)?;
-
-    while let Some(Ok(event)) = stream.next().await {
-        let mut notify = false;
-
-        if event.mask.contains(EventMask::MODIFY) {
-            notify = true;
+        let mut changed = false;
+        for event in events {
+            if event.name == source.file_name() {
+                changed = true;
+            }
         }
 
-        if event.mask.contains(EventMask::CREATE) && event.name == file_name {
-            inotify.add_watch(&path, WatchMask::MODIFY)?;
-            notify = true;
-        }
-
-        if notify {
-            tokio::time::delay_for(Duration::from_millis(50)).await;
-            tx.broadcast(())?;
+        if changed {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            let html = render_html(&opts, false, false);
+            notify.send(html)?;
         }
     }
-
-    anyhow::bail!("Loop stopped")
 }

@@ -19,10 +19,12 @@ const HEADER: &str = r#"
 
 const SSE_SOURCE: &str = r#"
   <script>
-    var es = new EventSource("/listen");
-    es.onmessage = function(e) {
-        document.body.innerHTML = e.data;
-    }
+    window.addEventListener("load", function() {
+        var es = new EventSource("/listen");
+        es.onmessage = function(e) {
+            document.body.innerHTML = e.data;
+        }
+    });
   </script>
 "#;
 
