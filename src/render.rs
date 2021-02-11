@@ -7,10 +7,9 @@ use kuchiki::{self, ExpandedName, NodeRef};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
-use std::io::Write;
 use std::iter::Peekable;
-use std::process::{Command, Stdio};
 use std::str::{self, FromStr};
+use syntect::{html, parsing::SyntaxSet, highlighting::ThemeSet};
 
 const HEADER: &str = r#"
 <!DOCTYPE html>
@@ -119,47 +118,23 @@ fn process_images(document: &NodeRef) {
 
 // Detect <pre><code> blocks, and parse them via Pygments
 fn process_code_snippets(document: &NodeRef) {
+
+    let syntax_set = SyntaxSet::load_defaults_newlines();
+    let theme_set = ThemeSet::load_defaults();
+
     let mut to_detach = Vec::new();
     for css_match in document.select("pre code").unwrap() {
         if let Some(code_class) = css_match.attributes.borrow().get("class") {
-            eprintln!("{:?}", code_class);
-            let spawn = Command::new("pygmentize")
-                .args(&["-f", "html", "-O", "noclasses", "-l"])
-                .arg(code_class.replace("language-", ""))
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .spawn();
+            if let Some(syntax) = syntax_set.find_syntax_by_token(&code_class.replace("language-", "")) {
+                let theme = &theme_set.themes["InspiredGitHub"];
+                let html = html::highlighted_html_for_string(&css_match.text_contents(), &syntax_set, syntax, theme);
 
-            let mut process = match spawn {
-                Ok(process) => process,
-                Err(e) => {
-                    eprintln!("Can't launch pygmentize: {:?}", e);
-                    continue;
-                }
-            };
+                let html_code = kuchiki::parse_html().one(html);
 
-            let code_text = css_match.text_contents();
-            let html_code = match process.stdin.as_mut().map(|s| s.write_all(code_text.as_bytes())) {
-                Some(Ok(_)) => {
-                    let output = process.wait_with_output().map(|o| o.stdout);
-                    match output.as_ref().map(|o| str::from_utf8(o.as_ref())) {
-                        Ok(Ok(o)) => kuchiki::parse_html().one(o),
-                        e => {
-                            eprintln!("Can't read HTML from pygmentize: {:?}", e);
-                            continue;
-                        }
-                    }
-                }
-                e => {
-                    eprintln!("Can't write to pygmentize: {:?}", e);
-                    let _ = process.kill();
-                    continue;
-                }
-            };
-
-            let pre_elem = css_match.as_node().parent().unwrap();
-            pre_elem.insert_after(html_code.select_first("div").unwrap().as_node().clone());
-            to_detach.push(pre_elem);
+                let pre_elem = css_match.as_node().parent().unwrap();
+                pre_elem.insert_after(html_code.select_first("pre").unwrap().as_node().clone());
+                to_detach.push(pre_elem);
+            }
         }
     }
 
